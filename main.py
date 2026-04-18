@@ -1,3 +1,4 @@
+
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -15,6 +16,8 @@ intents.message_content = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
+# ───────── REACT SYSTEM ─────────
+
 EMOTION_ENDPOINTS = {
     "happy":     "smile",
     "sad":       "cry",
@@ -28,32 +31,34 @@ EMOTION_ENDPOINTS = {
     "pat":       "pat",
 }
 
-GOJO_GIFS = [
-    "https://media.tenor.com/W4MzVuCBnXkAAAAC/gojo-satoru-jujutsu-kaisen.gif",
-    "https://media.tenor.com/1_E4Nby1z5QAAAAC/gojo-satoru.gif",
-    "https://media.tenor.com/xPmgTtcqJsoAAAAC/gojo-satoru-jujutsu-kaisen.gif",
-    "https://media.tenor.com/d3d8GOwNfFQAAAAC/gojo-satoru-jujutsu-kaisen.gif",
-    "https://media.tenor.com/9j9X2Q7P1NAAAAAC/gojo.gif",
-    "https://media.tenor.com/Gz9F5bHanSkAAAAC/gojo-satoru.gif",
-    "https://media.tenor.com/Y5LKA-A6ZwAAAAAC/gojo-satoru.gif",
-    "https://media.tenor.com/HtqOX-BpFEQAAAAC/gojo-satoru-gojo.gif",
-    "https://media.tenor.com/oCJCGLqEMKsAAAAC/jujutsu-kaisen-gojo-satoru.gif",
-    "https://media.tenor.com/oKTq3hBPRCsAAAAC/gojo-satoru.gif",
-    "https://media.tenor.com/Mk77c62_cSAAAAAC/gojo-satoru-jujutsu.gif",
-    "https://media.tenor.com/1v5kySGTkbAAAAAC/gojo-satoru-unlimited-void.gif",
-    "https://media.tenor.com/5QqP0pXKajUAAAAC/gojo-satoru-anime.gif",
-    "https://media.tenor.com/JK9XtGQcTpYAAAAC/gojo-satoru-jujutsu-kaisen.gif",
-    "https://media.tenor.com/FbcCimSx9KYAAAAC/gojo-satoru-jjk.gif",
-]
+# ───────── GOJO SYSTEM ─────────
+
+GOJO_ACTIONS = {
+    "happy": "gojo satoru happy",
+    "sad": "gojo satoru sad",
+    "angry": "gojo satoru angry",
+    "laugh": "gojo satoru laughing",
+    "fight": "gojo satoru fight",
+    "cool": "gojo satoru cool",
+    "blindfold": "gojo satoru blindfold",
+    "domain": "gojo domain expansion",
+    "blue": "gojo blue technique",
+    "red": "gojo red technique",
+    "purple": "gojo hollow purple"
+}
+
+# ───────── READY EVENT ─────────
 
 @bot.event
 async def on_ready():
     await bot.tree.sync()
-    print(f"✅ Logged in as {bot.user} (ID: {bot.user.id})")
+    print(f"✅ Logged in as {bot.user}")
     print("✅ Slash commands synced")
 
-@bot.tree.command(name="react", description="Send an anime reaction GIF based on your emotion")
-@app_commands.describe(emotion="Choose the emotion you want to express")
+# ───────── /REACT COMMAND ─────────
+
+@bot.tree.command(name="react", description="Send an anime reaction GIF")
+@app_commands.describe(emotion="Choose your emotion")
 @app_commands.choices(emotion=[
     app_commands.Choice(name="Happy 😊", value="happy"),
     app_commands.Choice(name="Sad 😢", value="sad"),
@@ -75,22 +80,66 @@ async def react(interaction: discord.Interaction, emotion: str):
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as resp:
             if resp.status != 200:
-                await interaction.followup.send("❌ Could not fetch a GIF right now. Try again!")
+                await interaction.followup.send("❌ Couldn't fetch GIF!")
                 return
             data = await resp.json()
 
     gif_url = data["results"][0]["url"]
-    embed = discord.Embed(title=emotion.capitalize(), color=discord.Color.blurple())
+
+    embed = discord.Embed(
+        title=f"{emotion.capitalize()}",
+        color=discord.Color.blurple()
+    )
     embed.set_image(url=gif_url)
 
     await interaction.followup.send(embed=embed)
 
-@bot.tree.command(name="gojo", description="Send a random Gojo Satoru reaction GIF")
-async def gojo(interaction: discord.Interaction):
-    gif_url = random.choice(GOJO_GIFS)
-    embed = discord.Embed(title="Gojo Satoru", color=discord.Color.blue())
-    embed.set_image(url=gif_url)
-    await interaction.response.send_message(embed=embed)
+# ───────── /GOJO COMMAND ─────────
+
+@bot.tree.command(name="gojo", description="Gojo reactions & abilities")
+@app_commands.describe(action="Choose Gojo action")
+@app_commands.choices(action=[
+    app_commands.Choice(name="Happy 😊", value="happy"),
+    app_commands.Choice(name="Sad 😢", value="sad"),
+    app_commands.Choice(name="Angry 😠", value="angry"),
+    app_commands.Choice(name="Laugh 😂", value="laugh"),
+    app_commands.Choice(name="Fight 🥊", value="fight"),
+    app_commands.Choice(name="Cool 😎", value="cool"),
+    app_commands.Choice(name="Blindfold 😎", value="blindfold"),
+    app_commands.Choice(name="Domain Expansion 🌀", value="domain"),
+    app_commands.Choice(name="Blue 💙", value="blue"),
+    app_commands.Choice(name="Red 🔴", value="red"),
+    app_commands.Choice(name="Hollow Purple 🟣", value="purple"),
+])
+async def gojo(interaction: discord.Interaction, action: str):
+    await interaction.response.defer()
+
+    query = GOJO_ACTIONS.get(action, "gojo satoru")
+    url = f"https://tenor.googleapis.com/v2/search?q={query}&key=LIVDSRZULELA&limit=10"
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as resp:
+            if resp.status != 200:
+                await interaction.followup.send("❌ Couldn't fetch Gojo GIF!")
+                return
+            data = await resp.json()
+
+    results = data.get("results", [])
+    if not results:
+        await interaction.followup.send("❌ No GIF found!")
+        return
+
+    gif = random.choice(results)["media_formats"]["gif"]["url"]
+
+    embed = discord.Embed(
+        title=f"Gojo — {action.capitalize()}",
+        color=discord.Color.from_rgb(135, 206, 250)
+    )
+    embed.set_image(url=gif)
+
+    await interaction.followup.send(embed=embed)
+
+# ───────── RUN BOT ─────────
 
 if __name__ == "__main__":
     if not TOKEN:
