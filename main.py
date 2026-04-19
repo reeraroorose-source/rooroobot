@@ -6,39 +6,23 @@ import aiohttp
 import os
 import random
 from dotenv import load_dotenv
-
 load_dotenv()
-
 TOKEN = os.getenv("DISCORD_TOKEN")
-
 intents = discord.Intents.default()
 intents.message_content = True
-
 bot = commands.Bot(command_prefix="!", intents=intents)
-
-# ── EMOTION API MAPPING ──
 EMOTION_ENDPOINTS = {
-    "happy": "smile",
-    "sad": "cry",
-    "angry": "kick",
+    "happy":     "smile",
+    "sad":       "cry",
+    "angry":     "kick",
     "surprised": "baka",
-    "shy": "blush",
-    "wave": "wave",
-    "hug": "hug",
-    "dance": "dance",
-    "laugh": "laugh",
-    "pat": "pat",
+    "shy":       "blush",
+    "wave":      "wave",
+    "hug":       "hug",
+    "dance":     "dance",
+    "laugh":     "laugh",
+    "pat":       "pat",
 }
-
-# ── BACKUP GIFS (IMPORTANT FIX) ──
-FALLBACK_GIFS = [
-    "https://media.tenor.com/0AVbKGY_MxMAAAAC/anime-smile.gif",
-    "https://media.tenor.com/W6Yc8M4z2q8AAAAC/anime-hug.gif",
-    "https://media.tenor.com/2roX3uxz_68AAAAC/anime-laugh.gif",
-    "https://media.tenor.com/Qr6d7X9EwSMAAAAC/anime-wave.gif",
-]
-
-# ── GOJO GIFS ──
 GOJO_GIFS = [
     "https://media.tenor.com/W4MzVuCBnXkAAAAC/gojo-satoru-jujutsu-kaisen.gif",
     "https://media.tenor.com/1_E4Nby1z5QAAAAC/gojo-satoru.gif",
@@ -50,70 +34,78 @@ GOJO_GIFS = [
     "https://media.tenor.com/HtqOX-BpFEQAAAAC/gojo-satoru-gojo.gif",
     "https://media.tenor.com/oCJCGLqEMKsAAAAC/jujutsu-kaisen-gojo-satoru.gif",
     "https://media.tenor.com/oKTq3hBPRCsAAAAC/gojo-satoru.gif",
+    "https://media.tenor.com/Mk77c62_cSAAAAAC/gojo-satoru-jujutsu.gif",
+    "https://media.tenor.com/1v5kySGTkbAAAAAC/gojo-satoru-unlimited-void.gif",
+    "https://media.tenor.com/5QqP0pXKajUAAAAC/gojo-satoru-anime.gif",
+    "https://media.tenor.com/JK9XtGQcTpYAAAAC/gojo-satoru-jujutsu-kaisen.gif",
+    "https://media.tenor.com/FbcCimSx9KYAAAAC/gojo-satoru-jjk.gif",
 ]
-
-# ── READY ──
 @bot.event
 async def on_ready():
     await bot.tree.sync()
-    print(f"✅ Logged in as {bot.user}")
-
-# ── REACT COMMAND (FIXED) ──
-@bot.tree.command(name="react", description="Anime reaction GIF")
+    print(f"✅ Logged in as {bot.user} (ID: {bot.user.id})")
+    print("✅ Slash commands synced")
+@bot.tree.command(name="react", description="Send an anime reaction GIF based on your emotion")
+@app_commands.describe(emotion="Choose the emotion you want to express")
 @app_commands.choices(emotion=[
-    app_commands.Choice(name="Happy 😊", value="happy"),
-    app_commands.Choice(name="Sad 😢", value="sad"),
-    app_commands.Choice(name="Angry 😠", value="angry"),
-    app_commands.Choice(name="Surprised 😲", value="surprised"),
-    app_commands.Choice(name="Shy 😳", value="shy"),
-    app_commands.Choice(name="Wave 👋", value="wave"),
-    app_commands.Choice(name="Hug 🤗", value="hug"),
-    app_commands.Choice(name="Dance 💃", value="dance"),
-    app_commands.Choice(name="Laugh 😂", value="laugh"),
-    app_commands.Choice(name="Pat 🫶", value="pat"),
+    app_commands.Choice(name="Happy 😊",      value="happy"),
+    app_commands.Choice(name="Sad 😢",        value="sad"),
+    app_commands.Choice(name="Angry 😠",      value="angry"),
+    app_commands.Choice(name="Surprised 😲",  value="surprised"),
+    app_commands.Choice(name="Shy 😳",        value="shy"),
+    app_commands.Choice(name="Wave 👋",       value="wave"),
+    app_commands.Choice(name="Hug 🤗",        value="hug"),
+    app_commands.Choice(name="Dance 💃",      value="dance"),
+    app_commands.Choice(name="Laugh 😂",      value="laugh"),
+    app_commands.Choice(name="Pat 🫶",        value="pat"),
 ])
 async def react(interaction: discord.Interaction, emotion: str):
     await interaction.response.defer()
-
     endpoint = EMOTION_ENDPOINTS.get(emotion, "smile")
     url = f"https://nekos.best/api/v2/{endpoint}"
-
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as resp:
-                if resp.status != 200:
-                    raise Exception("API failed")
-
-                data = await resp.json()
-                gif_url = data["results"][0]["url"]
-
-    except:
-        # 🔥 FALLBACK FIX
-        gif_url = random.choice(FALLBACK_GIFS)
-
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as resp:
+            if resp.status != 200:
+                await interaction.followup.send("❌ Could not fetch a GIF right now. Try again!")
+                return
+            data = await resp.json()
+    gif_url = data["results"][0]["url"]
+    artist_name = data["results"][0].get("artist_name", "Unknown")
+    anime_name  = data["results"][0].get("anime_name", "")
+    emotion_labels = {
+        "happy":     "😊 Feeling happy!",
+        "sad":       "😢 Feeling sad...",
+        "angry":     "😠 Feeling angry!",
+        "surprised": "😲 Surprised!",
+        "shy":       "😳 Feeling shy~",
+        "wave":      "👋 Waving!",
+        "hug":       "🤗 Sending hugs!",
+        "dance":     "💃 Let's dance!",
+        "laugh":     "😂 Laughing!",
+        "pat":       "🫶 Pat pat!",
+    }
     embed = discord.Embed(
-        title=f"{emotion.capitalize()} reaction",
+        title=emotion_labels.get(emotion, emotion.capitalize()),
         color=discord.Color.blurple()
     )
     embed.set_image(url=gif_url)
-
+    embed.set_footer(text=f"🎨 {artist_name}" + (f"  •  🎬 {anime_name}" if anime_name else ""))
     await interaction.followup.send(embed=embed)
-
-# ── GOJO COMMAND ──
-@bot.tree.command(name="gojo", description="Gojo reaction GIF")
+@bot.tree.command(name="gojo", description="Send a random Gojo Satoru reaction GIF 🥷")
 async def gojo(interaction: discord.Interaction):
     gif_url = random.choice(GOJO_GIFS)
-
     embed = discord.Embed(
-        title="Gojo Satoru 🔥",
-        color=discord.Color.blue()
+        title="Gojo Satoru 🥷",
+        description="*\"Throughout Heaven and Earth, I alone am the honored one.\"*",
+        color=discord.Color.from_rgb(135, 206, 250)
     )
     embed.set_image(url=gif_url)
-
+    embed.set_footer(text="Jujutsu Kaisen")
     await interaction.response.send_message(embed=embed)
+if __name__ == "__main__":
+    if not TOKEN:
+        print("❌ ERROR: DISCORD_TOKEN not found in .env file!")
+        print("👉 Copy .env.example to .env and add your bot token.")
+    else:
+        bot.run(TOKEN)
 
-# ── RUN ──
-if TOKEN:
-    bot.run(TOKEN)
-else:
-    print("❌ DISCORD_TOKEN missing")
