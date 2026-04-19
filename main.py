@@ -1,6 +1,5 @@
 
 
-
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -8,11 +7,21 @@ import aiohttp
 import os
 import random
 from dotenv import load_dotenv
+
 load_dotenv()
+
 TOKEN = os.getenv("DISCORD_TOKEN")
+
 intents = discord.Intents.default()
 intents.message_content = True
+
 bot = commands.Bot(command_prefix="!", intents=intents)
+
+
+def giphy(gif_id: str) -> str:
+    return f"https://media.giphy.com/media/{gif_id}/giphy.gif"
+
+
 EMOTION_ENDPOINTS = {
     "happy":     "smile",
     "sad":       "cry",
@@ -25,57 +34,63 @@ EMOTION_ENDPOINTS = {
     "laugh":     "laugh",
     "pat":       "pat",
 }
+
 GOJO_MOOD_GIFS = {
-    "cool": [
-        "https://media.tenor.com/W4MzVuCBnXkAAAAC/gojo-satoru-jujutsu-kaisen.gif",
-        "https://media.tenor.com/Y5LKA-A6ZwAAAAAC/gojo-satoru.gif",
-        "https://media.tenor.com/HtqOX-BpFEQAAAAC/gojo-satoru-gojo.gif",
-        "https://media.tenor.com/FbcCimSx9KYAAAAC/gojo-satoru-jjk.gif",
+    "hollow_purple": [
+        giphy("P2olhkZ061vEACZcSG"),
+        giphy("5HJ10dynt13qqF2dnS"),
+        giphy("9Xx1OMQIiA9feabm70"),
+        giphy("8TUMXruYkQ31IVOKKF"),
+        giphy("4sReZVgNmJLaVXp1mW"),
+        giphy("6FMCMhZ1pGMKbPjYB8"),
     ],
-    "smug": [
-        "https://media.tenor.com/1_E4Nby1z5QAAAAC/gojo-satoru.gif",
-        "https://media.tenor.com/Gz9F5bHanSkAAAAC/gojo-satoru.gif",
-        "https://media.tenor.com/oKTq3hBPRCsAAAAC/gojo-satoru.gif",
-        "https://media.tenor.com/5QqP0pXKajUAAAAC/gojo-satoru-anime.gif",
+    "blue": [
+        giphy("gOnyRejxIPvPUE65HN"),
+        giphy("5AL08VXMfOD48mzqfO"),
+        giphy("iNPNqI81MvDQ4D4n6D"),
+        giphy("TWmkxZCIIP0XdfH92G"),
+        giphy("QSwBid1bso4h5ePFnN"),
     ],
-    "serious": [
-        "https://media.tenor.com/xPmgTtcqJsoAAAAC/gojo-satoru-jujutsu-kaisen.gif",
-        "https://media.tenor.com/d3d8GOwNfFQAAAAC/gojo-satoru-jujutsu-kaisen.gif",
-        "https://media.tenor.com/JK9XtGQcTpYAAAAC/gojo-satoru-jujutsu-kaisen.gif",
-        "https://media.tenor.com/Mk77c62_cSAAAAAC/gojo-satoru-jujutsu.gif",
+    "smirk": [
+        giphy("nMtKecpxYBRLH5ggYp"),
+        giphy("2FLA1N2ESsT3L03FvK"),
+        giphy("aYQSXVlQXF7hgWvfri"),
+        giphy("YsHVkhLdi9af5JTR93"),
+        giphy("Y9FaRDuM1r55YGRiPg"),
+        giphy("Tl8hfjRo21CXNhSqAQ"),
     ],
-    "power": [
-        "https://media.tenor.com/1v5kySGTkbAAAAAC/gojo-satoru-unlimited-void.gif",
-        "https://media.tenor.com/9j9X2Q7P1NAAAAAC/gojo.gif",
-        "https://media.tenor.com/oCJCGLqEMKsAAAAC/jujutsu-kaisen-gojo-satoru.gif",
-        "https://media.tenor.com/HtqOX-BpFEQAAAAC/gojo-satoru-gojo.gif",
+    "playful": [
+        giphy("5EYhwZQV9cEvPulZkh"),
+        giphy("N58glDmlxrlqZc99jj"),
+        giphy("xBsGMBcnlRYantuffk"),
+        giphy("MxfS5KAoviW8SbUhV9"),
+        giphy("2R60TLJxKjDiMbyEfq"),
     ],
-    "happy": [
-        "https://media.tenor.com/Gz9F5bHanSkAAAAC/gojo-satoru.gif",
-        "https://media.tenor.com/5QqP0pXKajUAAAAC/gojo-satoru-anime.gif",
-        "https://media.tenor.com/1_E4Nby1z5QAAAAC/gojo-satoru.gif",
-        "https://media.tenor.com/oKTq3hBPRCsAAAAC/gojo-satoru.gif",
+    "honored_one": [
+        giphy("x16KAEmQ1gTfN8UBZW"),
+        giphy("AgmdBhjPbCBjn6Vuo1"),
+        giphy("p6jg7cOIQ7dUnOSH35"),
+        giphy("orvJf7kwgc2iakssc4"),
+        giphy("WldPA6tzPPSgZDxiJc"),
+        giphy("puSELgYhEXpHLnsblt"),
     ],
-    "angry": [
-        "https://media.tenor.com/xPmgTtcqJsoAAAAC/gojo-satoru-jujutsu-kaisen.gif",
-        "https://media.tenor.com/9j9X2Q7P1NAAAAAC/gojo.gif",
-        "https://media.tenor.com/Mk77c62_cSAAAAAC/gojo-satoru-jujutsu.gif",
-        "https://media.tenor.com/d3d8GOwNfFQAAAAC/gojo-satoru-jujutsu-kaisen.gif",
+    "limitless": [
+        giphy("HARTNiFs9XM7DqfUtc"),
+        giphy("DGsDLr9nyz2LkVgKFs"),
+        giphy("Pt9cmfZNAsBvSPxzNr"),
+        giphy("HARTNiFs9XM7DqfUtc"),
+        giphy("x16KAEmQ1gTfN8UBZW"),
     ],
 }
-GOJO_MOOD_LABELS = {
-    "cool":    ("😎 Too cool for you.", "Gojo Satoru 😎"),
-    "smug":    ("😏 You can't even touch me.", "Gojo Satoru 😏"),
-    "serious": ("🥷 Don't make me get serious.", "Gojo Satoru 🥷"),
-    "power":   ("⚡ Infinity — you can't hit me.", "Gojo Satoru ⚡"),
-    "happy":   ("😊 Even the strongest can smile.", "Gojo Satoru 😊"),
-    "angry":   ("😤 You just woke up the wrong guy.", "Gojo Satoru 😤"),
-}
+
+
 @bot.event
 async def on_ready():
     await bot.tree.sync()
     print(f"✅ Logged in as {bot.user} (ID: {bot.user.id})")
     print("✅ Slash commands synced")
+
+
 @bot.tree.command(name="react", description="Send an anime reaction GIF based on your emotion")
 @app_commands.describe(emotion="Choose the emotion you want to express")
 @app_commands.choices(emotion=[
@@ -92,17 +107,21 @@ async def on_ready():
 ])
 async def react(interaction: discord.Interaction, emotion: str):
     await interaction.response.defer()
+
     endpoint = EMOTION_ENDPOINTS.get(emotion, "smile")
     url = f"https://nekos.best/api/v2/{endpoint}"
+
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as resp:
             if resp.status != 200:
                 await interaction.followup.send("❌ Could not fetch a GIF right now. Try again!")
                 return
             data = await resp.json()
+
     gif_url = data["results"][0]["url"]
     artist_name = data["results"][0].get("artist_name", "Unknown")
     anime_name  = data["results"][0].get("anime_name", "")
+
     emotion_labels = {
         "happy": "😊 Feeling happy!", "sad": "😢 Feeling sad...",
         "angry": "😠 Feeling angry!", "surprised": "😲 Surprised!",
@@ -110,27 +129,33 @@ async def react(interaction: discord.Interaction, emotion: str):
         "hug": "🤗 Sending hugs!", "dance": "💃 Let's dance!",
         "laugh": "😂 Laughing!", "pat": "🫶 Pat pat!",
     }
-    embed = discord.Embed(title=emotion_labels.get(emotion, emotion.capitalize()), color=discord.Color.blurple())
+
+    embed = discord.Embed(
+        title=emotion_labels.get(emotion, emotion.capitalize()),
+        color=discord.Color.blurple()
+    )
     embed.set_image(url=gif_url)
     embed.set_footer(text=f"🎨 {artist_name}" + (f"  •  🎬 {anime_name}" if anime_name else ""))
     await interaction.followup.send(embed=embed)
-@bot.tree.command(name="gojo", description="Send a Gojo Satoru GIF based on his mood 🥷")
+
+
+@bot.tree.command(name="gojo", description="Send a Gojo Satoru GIF 🥷")
 @app_commands.describe(mood="Choose Gojo's mood")
 @app_commands.choices(mood=[
-    app_commands.Choice(name="Cool 😎",    value="cool"),
-    app_commands.Choice(name="Smug 😏",    value="smug"),
-    app_commands.Choice(name="Serious 🥷", value="serious"),
-    app_commands.Choice(name="Power ⚡",   value="power"),
-    app_commands.Choice(name="Happy 😊",   value="happy"),
-    app_commands.Choice(name="Angry 😤",   value="angry"),
+    app_commands.Choice(name="Hollow Purple 💜", value="hollow_purple"),
+    app_commands.Choice(name="Blue ⚡",          value="blue"),
+    app_commands.Choice(name="Smirk 😏",         value="smirk"),
+    app_commands.Choice(name="Playful 😄",        value="playful"),
+    app_commands.Choice(name="Honored One 👑",    value="honored_one"),
+    app_commands.Choice(name="Limitless ∞",       value="limitless"),
 ])
 async def gojo(interaction: discord.Interaction, mood: str):
     gif_url = random.choice(GOJO_MOOD_GIFS[mood])
-    quote, title = GOJO_MOOD_LABELS[mood]
-    embed = discord.Embed(title=title, description=f"*\"{quote}\"*", color=discord.Color.from_rgb(135, 206, 250))
+    embed = discord.Embed(color=discord.Color.from_rgb(135, 206, 250))
     embed.set_image(url=gif_url)
-    embed.set_footer(text="Jujutsu Kaisen  •  Gojo Satoru")
     await interaction.response.send_message(embed=embed)
+
+
 if __name__ == "__main__":
     if not TOKEN:
         print("❌ ERROR: DISCORD_TOKEN not found in .env file!")
